@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  background: #EDE6D6;
+  color: #0B0B0B;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Paper grain — subtle noise via SVG data URL */
+body {
+  background-image:
+    radial-gradient(rgba(11,11,11,0.04) 1px, transparent 1px),
+    radial-gradient(rgba(11,11,11,0.025) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 1px;
+}
+
+/* Selection */
+::selection {
+  background: #FF3B14;
+  color: #EDE6D6;
+}
+
+/* Brutal hover lift */
+.brutal-btn {
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.brutal-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 0 #0B0B0B;
+}
+.brutal-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 #0B0B0B;
+}
+.brutal-btn-acid:hover {
+  box-shadow: 8px 8px 0 0 #FF3B14;
+}
+
+/* Underline accent */
+.acid-underline {
+  background-image: linear-gradient(transparent 80%, #FF3B14 80%, #FF3B14 95%, transparent 95%);
+}
+
+/* Diagonal stripes */
+.stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #0B0B0B 0px,
+    #0B0B0B 6px,
+    transparent 6px,
+    transparent 14px
+  );
+}
+
+/* Form input reset */
+input, textarea, select {
+  background: transparent;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  background: #F6F1E3;
+}
+
+/* Marker bullet */
+.tick::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  color: #FF3B14;
+}
+
+/* Hide horizontal scrollbar on marquee */
+.marquee-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}

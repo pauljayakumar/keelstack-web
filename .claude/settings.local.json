@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npx next *)",
+      "Bash(curl -s -o /dev/null -w \"HOME %{http_code}\\\\n\" http://localhost:3919/)",
+      "Bash(curl -s -o /dev/null -w \"SEO  %{http_code}\\\\n\" http://localhost:3919/seo)",
+      "Bash(curl -s -o /dev/null -w \"SITE %{http_code}\\\\n\" http://localhost:3919/website)",
+      "Bash(curl -s -X POST http://localhost:3919/api/seo-report -H \"Content-Type: application/json\" -d '{\"url\":\"https://example.com\",\"email\":\"test@example.com\"}' -w \"\\\\nSEO-API %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://localhost:3919/api/website-build -H \"Content-Type: application/json\" -d '{\"business\":\"Test Co\",\"description\":\"We sell widgets to manufacturers across the midwest.\",\"email\":\"test@example.com\"}' -w \"\\\\nSITE-API %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://localhost:3919/api/seo-report -H \"Content-Type: application/json\" -d '{\"url\":\"not-a-url\",\"email\":\"bad\"}' -w \"\\\\n%{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://localhost:3919/api/website-build -H \"Content-Type: application/json\" -d '{\"business\":\"x\",\"description\":\"too short\",\"email\":\"bad\"}' -w \"\\\\n%{http_code}\\\\n\")",
+      "Bash(curl -s -o /dev/null -w \"THANKS-SEO %{http_code}\\\\nTHANKS-WEB %{http_code}\\\\n\" \"http://localhost:3919/thanks?service=seo\" -o /dev/null)",
+      "Bash(curl -s -o /dev/null -w \"THANKS %{http_code}\\\\n\" \"http://localhost:3919/thanks?service=website\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(npm run *)",
+      "Bash(aws sts *)",
+      "Bash(aws configure *)",
+      "Bash(aws --version)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
