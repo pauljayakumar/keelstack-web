@@ -61,7 +61,9 @@
       "Bash(curl -s -o /dev/null -w \"SITE %{http_code}\\\\n\" \"https://main.d2iftshi4fkexf.amplifyapp.com/website\")",
       "Bash(curl -s -X POST \"https://main.d2iftshi4fkexf.amplifyapp.com/api/seo-report\" -H \"Content-Type: application/json\" -d '{\"url\":\"https://example.com\",\"email\":\"test@example.com\"}' -w \"\\\\nSEO-API %{http_code}\\\\n\")",
       "Bash(nslookup -type=cname www.keelstack.uk 8.8.8.8)",
-      "Bash(nslookup -type=cname _92c28d724ef53ca76005a59ad02aa08e.keelstack.uk 8.8.8.8)"
+      "Bash(nslookup -type=cname _92c28d724ef53ca76005a59ad02aa08e.keelstack.uk 8.8.8.8)",
+      "Bash(curl -s -X POST \"https://main.d2iftshi4fkexf.amplifyapp.com/api/seo-report\" -H \"Content-Type: application/json\" -d '{\"url\":\"https://test-from-claude.example.com\",\"email\":\"test-sender@example.com\",\"keywords\":\"smoke test\",\"notes\":\"This is a smoke test from Claude to verify SMTP integration works. If you see this in hello@keelstack.uk, the wiring is good.\"}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST \"https://main.d2iftshi4fkexf.amplifyapp.com/api/website-build\" -H \"Content-Type: application/json\" -d '{\"business\":\"Smoke Test Co\",\"description\":\"Verifying SMTP works end-to-end on production via Claude smoke test.\",\"email\":\"test-sender@example.com\"}' -w \"\\\\nHTTP %{http_code}\\\\n\")"
     ]
   }
 }

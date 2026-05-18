@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  generateWebsitePreview,
   isValidEmail,
-  paymentLinkFor,
-  sendDeliveryEmail,
-  sendInternalNotification,
+  sendVerificationEmail,
   type WebsiteRequest,
 } from "@/lib/funnel";
 
@@ -31,19 +28,14 @@ export async function POST(req: Request) {
 
   const request: WebsiteRequest = { business, description, email, references };
 
-  // Internal lead notification — fire-and-forget so it can't break the funnel.
-  sendInternalNotification({ type: "website", payload: request }).catch((err) =>
-    console.error("[notify-website] failed:", err)
-  );
-
-  const { artifactUrl } = await generateWebsitePreview(request);
-
-  await sendDeliveryEmail({
-    to: email,
-    subject: `Your KEELSTACK preview for ${business}`,
-    artifactUrl,
-    paymentUrl: paymentLinkFor("website"),
-  });
+  // Send the confirmation email. We do NOT trigger generation or studio
+  // notification here — that happens after the prospect clicks the link.
+  try {
+    await sendVerificationEmail({ type: "website", payload: request });
+  } catch (err) {
+    console.error("[website-verify-email] failed:", err);
+    return NextResponse.json({ error: "Couldn't send the confirmation email. Try again, or check the address." }, { status: 502 });
+  }
 
   return NextResponse.json({ ok: true });
 }

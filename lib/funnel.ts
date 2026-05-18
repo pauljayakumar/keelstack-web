@@ -41,6 +41,7 @@ export type Delivery = {
 // ---------------------------------------------------------------------------
 
 import nodemailer from "nodemailer";
+import { SignJWT, jwtVerify } from "jose";
 
 type NotifyInput =
   | { type: "seo"; payload: SEORequest }
@@ -127,6 +128,121 @@ export async function sendInternalNotification(input: NotifyInput): Promise<void
     from: `"KEELSTACK Leads" <${user}>`,
     to,
     replyTo: prospectEmail,
+    subject,
+    text: body,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// DOUBLE OPT-IN VERIFICATION
+// JWT-signed token carries the full form payload — no DB needed.
+// Prospect clicks the link in the verification email, lands on /verify, then
+// confirms; only then do we fire generation + studio notification + delivery.
+// ---------------------------------------------------------------------------
+
+const VERIFY_TOKEN_TTL = 60 * 60 * 24; // 24 hours
+
+type VerifyPayload =
+  | { type: "seo"; payload: SEORequest }
+  | { type: "website"; payload: WebsiteRequest };
+
+function verifySecret(): Uint8Array {
+  const secret = process.env.VERIFY_SECRET;
+  if (!secret || secret.length < 16) {
+    throw new Error("VERIFY_SECRET is missing or too short (need ≥16 chars).");
+  }
+  return new TextEncoder().encode(secret);
+}
+
+export async function createVerifyToken(p: VerifyPayload): Promise<string> {
+  return await new SignJWT({ ...p })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${VERIFY_TOKEN_TTL}s`)
+    .sign(verifySecret());
+}
+
+export async function parseVerifyToken(token: string): Promise<VerifyPayload> {
+  const { payload } = await jwtVerify(token, verifySecret());
+  const t = payload as unknown as VerifyPayload;
+  if (t.type !== "seo" && t.type !== "website") {
+    throw new Error("Invalid token type");
+  }
+  return t;
+}
+
+function appBaseUrl(): string {
+  return (process.env.APP_URL || "https://www.keelstack.uk").replace(/\/$/, "");
+}
+
+const WHITELIST_TIP_TEXT = `
+Tip — so the report doesn't end up in your spam folder:
+  • Gmail: open this email, click ⋮ → "Add KEELSTACK to Contacts"
+  • Outlook: right-click sender → "Add to Safe Senders"
+  • Apple Mail: tap sender → Add to VIPs / Contacts
+Or simply reply with anything — your provider will learn we're safe.
+`.trim();
+
+export async function sendVerificationEmail(input: VerifyPayload): Promise<void> {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const port = Number(process.env.SMTP_PORT || 465);
+
+  if (!host || !user || !pass) {
+    console.warn("[verify-email] SMTP not configured — skipping (token still issued)");
+    return;
+  }
+
+  const token = await createVerifyToken(input);
+  const link = `${appBaseUrl()}/verify?token=${encodeURIComponent(token)}`;
+
+  let to: string;
+  let subject: string;
+  let intro: string;
+  let what: string;
+
+  if (input.type === "seo") {
+    to = input.payload.email;
+    let host = "your site";
+    try { host = new URL(input.payload.url).hostname; } catch {}
+    subject = `Confirm your free SEO audit for ${host}`;
+    intro = `Someone (hopefully you) just requested a free SEO audit for ${input.payload.url}.`;
+    what = "Click below to confirm and we'll run the audit. The full report lands in this inbox within a few hours.";
+  } else {
+    to = input.payload.email;
+    subject = `Confirm your free website preview for ${input.payload.business}`;
+    intro = `Someone (hopefully you) just requested a free website preview for ${input.payload.business}.`;
+    what = "Click below to confirm and we'll build your preview. A live URL lands in this inbox within 48 hours.";
+  }
+
+  const body = [
+    intro,
+    "",
+    what,
+    "",
+    `   ${link}`,
+    "",
+    "If you didn't request this, just ignore this email. Nothing happens without the click above.",
+    "",
+    "----",
+    "",
+    WHITELIST_TIP_TEXT,
+    "",
+    "— KEELSTACK",
+    "https://www.keelstack.uk",
+  ].join("\n");
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({
+    from: `"KEELSTACK" <${user}>`,
+    to,
     subject,
     text: body,
   });
