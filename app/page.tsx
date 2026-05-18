@@ -86,47 +86,45 @@ function Marquee() {
 
 function Hero() {
   return (
-    <section className="relative border-b-2 border-ink">
+    <section className="relative border-b-2 border-ink lg:min-h-[calc(100svh-90px)] lg:flex lg:items-center">
       {/* corner ticks */}
       <CornerTicks />
-      <div className="mx-auto max-w-[1400px] px-5 md:px-8 py-14 md:py-24 grid grid-cols-12 gap-6">
+      <div className="w-full mx-auto max-w-[1400px] px-5 md:px-8 py-10 md:py-12 lg:py-8 grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-8">
-          <div className="font-term text-acid text-2xl md:text-3xl mb-6">
+          <div className="font-term text-acid text-lg md:text-2xl mb-3 md:mb-4">
             &gt; ./keelstack --serve<span className="animate-blink">_</span>
           </div>
-          <h1 className="font-display uppercase leading-[0.86] tracking-tight text-[clamp(48px,9vw,140px)]">
+          <h1 className="font-display uppercase leading-[0.86] tracking-tight text-[clamp(40px,7vw,108px)]">
             We build the
             <br />
-            thing.<span className="text-acid">_</span> You
+            thing.<span className="text-acid">_</span> You decide
             <br />
-            decide if it&rsquo;s
-            <br />
-            <span className="acid-underline">worth paying for.</span>
+            if it&rsquo;s <span className="acid-underline">worth paying for.</span>
           </h1>
-          <p className="mt-8 md:mt-10 max-w-2xl text-base md:text-lg leading-relaxed">
+          <p className="mt-5 md:mt-6 max-w-2xl text-sm md:text-base leading-relaxed">
             KEELSTACK ships you a <b>full SEO audit</b> or a <b>complete website</b> —
             before you spend a cent. Read it. Click around. If it&rsquo;s good, the bill follows.
             If it isn&rsquo;t, you delete the email. That&rsquo;s the entire deal.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-5">
+          <div className="mt-6 md:mt-7 flex flex-col sm:flex-row gap-4">
             <Link
               href="/seo"
-              className="brutal-btn brutal-btn-acid border-2 border-ink bg-acid text-paper px-7 py-5 font-display uppercase tracking-wider text-lg md:text-xl shadow-brutal inline-flex items-center gap-3"
+              className="brutal-btn brutal-btn-acid border-2 border-ink bg-acid text-paper px-6 py-4 font-display uppercase tracking-wider text-base md:text-lg shadow-brutal inline-flex items-center gap-3"
             >
               Get the free SEO report
               <span aria-hidden>→</span>
             </Link>
             <Link
               href="/website"
-              className="brutal-btn border-2 border-ink bg-paper text-ink px-7 py-5 font-display uppercase tracking-wider text-lg md:text-xl shadow-brutal inline-flex items-center gap-3"
+              className="brutal-btn border-2 border-ink bg-paper text-ink px-6 py-4 font-display uppercase tracking-wider text-base md:text-lg shadow-brutal inline-flex items-center gap-3"
             >
               Get a free website
               <span aria-hidden>→</span>
             </Link>
           </div>
 
-          <div className="mt-6 text-xs md:text-sm font-term text-ink/70">
+          <div className="mt-4 text-xs font-term text-ink/70">
             ⌁ No credit card. No signup. Just a URL or a brief.
           </div>
         </div>
@@ -147,7 +145,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="mt-5 border-2 border-ink p-5 font-term text-sm leading-relaxed">
+          <div className="mt-4 border-2 border-ink p-5 font-term text-sm leading-relaxed hidden lg:block">
             <span className="text-acid">$</span> cat why.txt<br />
             <span className="opacity-70">→ retainers waste money.</span><br />
             <span className="opacity-70">→ agencies waste months.</span><br />
