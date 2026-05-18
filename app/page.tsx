@@ -95,9 +95,9 @@ function Hero() {
             &gt; ./keelstack --serve<span className="animate-blink">_</span>
           </div>
           <h1 className="font-display uppercase leading-[0.86] tracking-tight text-[clamp(40px,7vw,108px)]">
-            We build the
+            We build your
             <br />
-            thing.<span className="text-acid">_</span> You decide
+            site.<span className="text-acid">_</span> You decide
             <br />
             if it&rsquo;s <span className="acid-underline">worth paying for.</span>
           </h1>
