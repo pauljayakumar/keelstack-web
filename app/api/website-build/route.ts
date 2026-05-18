@@ -4,6 +4,7 @@ import {
   isValidEmail,
   paymentLinkFor,
   sendDeliveryEmail,
+  sendInternalNotification,
   type WebsiteRequest,
 } from "@/lib/funnel";
 
@@ -29,6 +30,12 @@ export async function POST(req: Request) {
   if (!isValidEmail(email)) return NextResponse.json({ error: "Please provide a valid email." }, { status: 400 });
 
   const request: WebsiteRequest = { business, description, email, references };
+
+  // Internal lead notification — fire-and-forget so it can't break the funnel.
+  sendInternalNotification({ type: "website", payload: request }).catch((err) =>
+    console.error("[notify-website] failed:", err)
+  );
+
   const { artifactUrl } = await generateWebsitePreview(request);
 
   await sendDeliveryEmail({

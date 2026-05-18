@@ -35,6 +35,104 @@ export type Delivery = {
 };
 
 // ---------------------------------------------------------------------------
+// INTERNAL LEAD NOTIFICATION
+// Emails the studio inbox whenever a form is submitted.
+// Uses cPanel SMTP. Fire-and-forget: failures log but don't block the funnel.
+// ---------------------------------------------------------------------------
+
+import nodemailer from "nodemailer";
+
+type NotifyInput =
+  | { type: "seo"; payload: SEORequest }
+  | { type: "website"; payload: WebsiteRequest };
+
+export async function sendInternalNotification(input: NotifyInput): Promise<void> {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const to = process.env.NOTIFY_EMAIL || "hello@keelstack.uk";
+  const port = Number(process.env.SMTP_PORT || 465);
+
+  if (!host || !user || !pass) {
+    console.warn("[notify] SMTP not configured (SMTP_HOST/USER/PASS missing) — skipping");
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  const nowIso = new Date().toISOString();
+  const nowHuman = new Date().toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    dateStyle: "full",
+    timeStyle: "long",
+  });
+
+  let subject: string;
+  let leadHeader: string;
+  let fields: Array<[string, string | undefined]>;
+  let prospectEmail: string;
+
+  if (input.type === "seo") {
+    const p = input.payload;
+    prospectEmail = p.email;
+    let host = "unknown";
+    try { host = new URL(p.url).hostname; } catch {}
+    subject = `[KEELSTACK / SEO] New audit request — ${host}`;
+    leadHeader = "New SEO audit request";
+    fields = [
+      ["URL", p.url],
+      ["Email", p.email],
+      ["Target keywords", p.keywords],
+      ["Notes", p.notes],
+    ];
+  } else {
+    const p = input.payload;
+    prospectEmail = p.email;
+    subject = `[KEELSTACK / WEBSITE] New build request — ${p.business}`;
+    leadHeader = "New website preview request";
+    fields = [
+      ["Business", p.business],
+      ["Description", p.description],
+      ["Email", p.email],
+      ["References", p.references],
+    ];
+  }
+
+  const lines = fields
+    .filter(([, v]) => v && String(v).trim().length > 0)
+    .map(([k, v]) => `${k}:\n  ${String(v).replace(/\n/g, "\n  ")}`)
+    .join("\n\n");
+
+  const body = [
+    leadHeader,
+    "",
+    `Submitted: ${nowHuman}`,
+    `ISO:       ${nowIso}`,
+    "",
+    "----------------------------------------",
+    "",
+    lines,
+    "",
+    "----------------------------------------",
+    "",
+    "Reply directly to this email to respond to the prospect.",
+  ].join("\n");
+
+  await transporter.sendMail({
+    from: `"KEELSTACK Leads" <${user}>`,
+    to,
+    replyTo: prospectEmail,
+    subject,
+    text: body,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // SEO REPORT
 // ---------------------------------------------------------------------------
 

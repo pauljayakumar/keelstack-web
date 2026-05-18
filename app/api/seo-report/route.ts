@@ -5,6 +5,7 @@ import {
   isValidUrl,
   paymentLinkFor,
   sendDeliveryEmail,
+  sendInternalNotification,
   type SEORequest,
 } from "@/lib/funnel";
 
@@ -29,6 +30,12 @@ export async function POST(req: Request) {
   // Kick off generation + delivery. In production these would be queued, not
   // awaited inline — but the stub returns instantly so it's fine here.
   const request: SEORequest = { url, email, keywords, notes };
+
+  // Internal lead notification — fire-and-forget so it can't break the funnel.
+  sendInternalNotification({ type: "seo", payload: request }).catch((err) =>
+    console.error("[notify-seo] failed:", err)
+  );
+
   const { artifactUrl } = await generateSEOReport(request);
 
   await sendDeliveryEmail({
