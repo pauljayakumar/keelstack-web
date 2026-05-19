@@ -4,6 +4,14 @@ frontend:
     preBuild:
       commands:
         - npm ci --cache .npm --prefer-offline
+        # Amplify exposes env vars to the build env, but NOT to the SSR runtime
+        # Lambda by default. Writing them to .env.production makes Next.js bake
+        # them into the runtime bundle so process.env.* works at request time.
+        - |
+          for v in SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASS NOTIFY_EMAIL VERIFY_SECRET APP_URL ANTHROPIC_API_KEY RESEND_API_KEY FROM_EMAIL STRIPE_PAYMENT_LINK_SEO STRIPE_PAYMENT_LINK_WEBSITE PREVIEW_BASE_URL; do
+            val=$(printenv "$v" || true)
+            if [ -n "$val" ]; then echo "$v=$val" >> .env.production; fi
+          done
     build:
       commands:
         - npm run build
