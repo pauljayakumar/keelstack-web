@@ -11,12 +11,12 @@ frontend:
           for v in SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASS NOTIFY_EMAIL VERIFY_SECRET APP_URL ANTHROPIC_API_KEY RESEND_API_KEY FROM_EMAIL STRIPE_PAYMENT_LINK_SEO STRIPE_PAYMENT_LINK_WEBSITE PREVIEW_BASE_URL; do
             val=$(printenv "$v" || true)
             if [ -n "$val" ]; then
-              # Trim whitespace
+              # Trim leading/trailing whitespace
               val=$(printf '%s' "$val" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-              # Escape single quotes, then wrap in single quotes so dotenv doesn't
-              # treat $X as a variable reference (e.g. for passwords containing $).
-              escaped=$(printf '%s' "$val" | sed "s/'/'\\\\''/g")
-              echo "$v='$escaped'" >> .env.production
+              # Escape $ so Next.js's dotenv-expand treats them literally
+              # (e.g. passwords containing $X where X looks like a var name).
+              val=$(printf '%s' "$val" | sed 's/[$]/\\$/g')
+              printf '%s=%s\n' "$v" "$val" >> .env.production
             fi
           done
     build:
