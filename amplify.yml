@@ -10,7 +10,14 @@ frontend:
         - |
           for v in SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASS NOTIFY_EMAIL VERIFY_SECRET APP_URL ANTHROPIC_API_KEY RESEND_API_KEY FROM_EMAIL STRIPE_PAYMENT_LINK_SEO STRIPE_PAYMENT_LINK_WEBSITE PREVIEW_BASE_URL; do
             val=$(printenv "$v" || true)
-            if [ -n "$val" ]; then echo "$v=$val" >> .env.production; fi
+            if [ -n "$val" ]; then
+              # Trim whitespace
+              val=$(printf '%s' "$val" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+              # Escape single quotes, then wrap in single quotes so dotenv doesn't
+              # treat $X as a variable reference (e.g. for passwords containing $).
+              escaped=$(printf '%s' "$val" | sed "s/'/'\\\\''/g")
+              echo "$v='$escaped'" >> .env.production
+            fi
           done
     build:
       commands:
