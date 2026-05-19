@@ -41,30 +41,48 @@ export type Delivery = {
 // ---------------------------------------------------------------------------
 
 import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import { SignJWT, jwtVerify } from "jose";
 
 type NotifyInput =
   | { type: "seo"; payload: SEORequest }
   | { type: "website"; payload: WebsiteRequest };
 
-export async function sendInternalNotification(input: NotifyInput): Promise<void> {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const to = process.env.NOTIFY_EMAIL || "hello@keelstack.uk";
-  const port = Number(process.env.SMTP_PORT || 465);
+// Strip ANY whitespace/control chars from front and back of env vars.
+// cPanel + Amplify forms sometimes introduce trailing newlines or zero-width
+// chars that break SMTP auth with "535 Incorrect authentication data".
+function cleanEnv(v: string | undefined): string {
+  if (!v) return "";
+  return v.replace(/^[\s​-‍﻿ ]+|[\s​-‍﻿ ]+$/g, "");
+}
 
-  if (!host || !user || !pass) {
-    console.warn("[notify] SMTP not configured (SMTP_HOST/USER/PASS missing) — skipping");
-    return;
-  }
+function smtpTransport(): Transporter | null {
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS);
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || 465);
+  if (!host || !user || !pass) return null;
 
-  const transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
     auth: { user, pass },
+    // Force LOGIN — some cPanel Exim setups reject AUTH PLAIN even with
+    // correct credentials, but accept the same creds via AUTH LOGIN.
+    authMethod: "LOGIN",
   });
+}
+
+export async function sendInternalNotification(input: NotifyInput): Promise<void> {
+  const transporter = smtpTransport();
+  const user = cleanEnv(process.env.SMTP_USER);
+  const to = cleanEnv(process.env.NOTIFY_EMAIL) || "hello@keelstack.uk";
+
+  if (!transporter) {
+    console.warn("[notify] SMTP not configured (SMTP_HOST/USER/PASS missing) — skipping");
+    return;
+  }
 
   const nowIso = new Date().toISOString();
   const nowHuman = new Date().toLocaleString("en-GB", {
@@ -184,12 +202,16 @@ Or simply reply with anything — your provider will learn we're safe.
 `.trim();
 
 export async function sendVerificationEmail(input: VerifyPayload): Promise<void> {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const port = Number(process.env.SMTP_PORT || 465);
+  const transporter = smtpTransport();
+  const user = cleanEnv(process.env.SMTP_USER);
 
-  if (!host || !user || !pass) {
+  // Diagnostic — log lengths only (never the values).
+  const rawHost = process.env.SMTP_HOST || "";
+  const rawUser = process.env.SMTP_USER || "";
+  const rawPass = process.env.SMTP_PASS || "";
+  console.log(`[verify-email] env lens: host=${rawHost.length}/${cleanEnv(rawHost).length} user=${rawUser.length}/${cleanEnv(rawUser).length} pass=${rawPass.length}/${cleanEnv(rawPass).length}`);
+
+  if (!transporter) {
     console.warn("[verify-email] SMTP not configured — skipping (token still issued)");
     return;
   }
@@ -232,13 +254,6 @@ export async function sendVerificationEmail(input: VerifyPayload): Promise<void>
     "— KEELSTACK",
     "https://www.keelstack.uk",
   ].join("\n");
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
 
   await transporter.sendMail({
     from: `"KEELSTACK" <${user}>`,
